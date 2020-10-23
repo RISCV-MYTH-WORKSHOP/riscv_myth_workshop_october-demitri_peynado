@@ -13,11 +13,10 @@
 \TLV
    $reset = *reset;
 
-   $out = $in1 && $in2;
+   $out[4:0] = $in1[3:0] + $in2[3:0];
 
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = *cyc_cnt > 40;
    *failed = 1'b0;
 \SV
    endmodule
-
