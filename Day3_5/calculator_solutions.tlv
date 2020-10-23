@@ -16,7 +16,7 @@
    $val2[31:0] = $rand2[3:0]; // to keep input values small
    
    // Parallel calculations (not concerned with power)
-   $quot [31:0] = $val1 / $val2;
+   $quot[31:0]  = $val1 / $val2;
    $prod[31:0]  = $val1 * $val2;
    $diff[31:0]  = $val1 - $val2;
    $sum [31:0]  = $val1 + $val2;
@@ -27,6 +27,8 @@
                           $prod[31:0]) : // (2 = prod)
                 ($op[0] ? $diff[31:0]  : // (1 = diff)
                           $sum [31:0]) ; // (0 = sum )
+   
+   $cnt[31:0] = $reset ? 0 : (>>1$cnt + 1);
 
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = *cyc_cnt > 40;
