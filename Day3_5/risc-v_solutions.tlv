@@ -42,7 +42,10 @@
          $reset = *reset;
          // Reset when last instruction was reset to start on PC=0
          $pc[31:0] = >>1$reset ? 32'd0 : >>1$pc + 32'd4;
-   
+      @1
+         $imem_rd_en = ! $reset;
+         $imem_rd_addr[M4_IMEM_INDEX_CNT+1:0] = $pc[M4_IMEM_INDEX_CNT+1:2];
+         $instr[31:0] = $imem_rd_data[31:0];
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = *cyc_cnt > 40;
    *failed = 1'b0;
