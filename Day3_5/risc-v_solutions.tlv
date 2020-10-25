@@ -134,7 +134,11 @@
             $is_addi ? $src1_value + $imm :
             $is_add ? $src1_value + $src2_value :
                       32'bx;
-      
+         
+         // Register file write
+         $rf_wr_en = $rd_valid && ! ($rd[4:0] == 5'b0); // x0 cannot be written to in RISC-V
+         $rf_wr_index[4:0] = $rd;
+         $rf_wr_data[31:0] = $result;
          
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = *cyc_cnt > 40;
