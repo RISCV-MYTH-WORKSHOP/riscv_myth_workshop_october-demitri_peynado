@@ -44,11 +44,7 @@
          // Branch when valid taken branch else increment
          $pc[31:0] = >>1$reset ? 32'd0 :
                      >>3$valid_taken_br ? >>3$br_tgt_pc :
-                                          >>3$pc + 32'd4;
-         $start = >>1$reset && ! $reset;
-         $valid = $reset ? 1'b0 :
-                  $start ? 1'b1 :
-                           >>3$valid;
+                                          >>1$pc + 32'd4;
       @1
          // Fetch instruction
          $imem_rd_en = ! $reset;
@@ -138,7 +134,7 @@
                                               $rf_rd_data1;
          $src2_value[31:0] = $rs2_bypass_en ? >>1$result :
                                               $rf_rd_data2;
-      @3   
+      @3
          // Branch Taken?
          ?$is_b_instr
             $taken_br =
@@ -153,7 +149,9 @@
                1'b0; // else no branch
             
             $br_tgt_pc[31:0] = $pc + $imm;
-         // valid_taken_br must always be computed (no validity)
+         
+         // check RF write is valid
+         $valid = ! (>>1$valid_taken_br || >>2$valid_taken_br);
          $valid_taken_br = $valid && $taken_br;
          
          // ALU
