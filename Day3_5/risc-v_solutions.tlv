@@ -86,6 +86,8 @@
          //      Validity probably does not help
          ///     much with power here but has been added
          //      to help with debug.
+         //      Actually this is a lab that was completed
+         //      accidentally... 
          $rd_valid = ! ($is_s_instr || $is_b_instr);
          $rs1_valid = ! ($is_j_instr || $is_u_instr);
          $rs2_valid = $rs1_valid && ! $is_i_instr;
@@ -101,6 +103,24 @@
             $funct3[2:0] = $instr[14:12];
          ?$is_r_instr
             $funct7[6:0] = $instr[31:25];
+            
+         //   (individual instruction)
+         $dec_bits[10:0] = {$funct7[5],$funct3,$opcode};
+         //      (branch)
+         $is_beq = $dec_bits ==? 11'bx_000_1100011;
+         $is_bne = $dec_bits ==? 11'bx_001_1100011;
+         $is_blt = $dec_bits ==? 11'bx_100_1100011;
+         $is_bge = $dec_bits ==? 11'bx_101_1100011;
+         $is_bltu = $dec_bits ==? 11'bx_110_1100011;
+         $is_bgeu = $dec_bits ==? 11'bx_111_1100011; 
+         //      (arithmetic)
+         $is_addi = $dec_bits ==? 11'bx_000_0010011;
+         $is_add = $dec_bits ==? 11'b0_000_0110011;
+         
+         // Until instrs are implemented,
+         // quiet down the warnings
+         `BOGUS_USE($is_beq $is_bne $is_blt $is_bge $is_bltu $is_bgeu $is_addi $is_add)
+         
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = *cyc_cnt > 40;
    *failed = 1'b0;
