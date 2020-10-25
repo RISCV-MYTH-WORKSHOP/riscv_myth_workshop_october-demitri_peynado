@@ -125,7 +125,7 @@
          $rf_rd_en1 = $rs1_valid;
          $rf_rd_en2 = $rs2_valid;
          $rf_rd_index1[4:0] = $rs1;
-         $rd_rd_index2[4:0] = $rs2;
+         $rf_rd_index2[4:0] = $rs2;
          
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = *cyc_cnt > 40;
