@@ -41,9 +41,10 @@
       @0
          $reset = *reset;
          // Reset when last instruction was reset to start on PC=0
+         // Branch when valid taken branch else increment
          $pc[31:0] = >>1$reset ? 32'd0 :
-                     >>1$taken_br ? >>1$br_tgt_pc :
-                                    >>1$pc + 32'd4;
+                     >>3$valid_taken_br ? >>3$br_tgt_pc :
+                                          >>3$pc + 32'd4;
          $start = >>1$reset && ! $reset;
          $valid = $reset ? 1'b0 :
                   $start ? 1'b1 :
@@ -149,6 +150,8 @@
                1'b0; // else no branch
             
             $br_tgt_pc[31:0] = $pc + $imm;
+         // valid_taken_br must always be computed (no validity)
+         $valid_taken_br = $valid && $taken_br;
          
          // ALU
          $result[31:0] =
@@ -157,7 +160,7 @@
                       32'bx;
          
          // Register file write
-         $rf_wr_en = $rd_valid && ! ($rd[4:0] == 5'b0); // x0 cannot be written to in RISC-V
+         $rf_wr_en = $valid && $rd_valid && ! ($rd[4:0] == 5'b0); // x0 cannot be written to in RISC-V
          $rf_wr_index[4:0] = $rd;
          $rf_wr_data[31:0] = $result;
          
