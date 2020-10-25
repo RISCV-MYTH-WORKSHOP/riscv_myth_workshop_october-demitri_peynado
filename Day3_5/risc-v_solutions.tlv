@@ -44,7 +44,10 @@
          $pc[31:0] = >>1$reset ? 32'd0 :
                      >>1$taken_br ? >>1$br_tgt_pc :
                                     >>1$pc + 32'd4;
-         
+         $start = >>1$reset && ! $reset;
+         $valid = $reset ? 1'b0 :
+                  $start ? 1'b1 :
+                           >>3$valid;
       @1
          // Fetch instruction
          $imem_rd_en = ! $reset;
@@ -158,7 +161,7 @@
          $rf_wr_index[4:0] = $rd;
          $rf_wr_data[31:0] = $result;
          
-   // Assert these to end simulation (expected value in register).
+   // Assert these to end simulation (before Makerchip cycle limit).
    *passed = |cpu/xreg[10]>>5$value == (1+2+3+4+5+6+7+8+9);
    *failed = 1'b0;
    
