@@ -158,8 +158,8 @@
          $rf_wr_index[4:0] = $rd;
          $rf_wr_data[31:0] = $result;
          
-   // Assert these to end simulation (before Makerchip cycle limit).
-   *passed = *cyc_cnt > 40;
+   // Assert these to end simulation (expected value in register).
+   *passed = |cpu/xreg[10]>>5$value == (1+2+3+4+5+6+7+8+9);
    *failed = 1'b0;
    
    // Macro instantiations for:
