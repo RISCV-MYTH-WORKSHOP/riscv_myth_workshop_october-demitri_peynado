@@ -41,7 +41,10 @@
       @0
          $reset = *reset;
          // Reset when last instruction was reset to start on PC=0
-         $pc[31:0] = >>1$reset ? 32'd0 : >>1$pc + 32'd4;
+         $pc[31:0] = >>1$reset ? 32'd0 :
+                     >>1$taken_br ? >>1$br_tgt_pc :
+                                    >>1$pc + 32'd4;
+         
       @1
          // Fetch instruction
          $imem_rd_en = ! $reset;
@@ -141,6 +144,8 @@
                $is_bltu ? $rf_rd_data1 < $rf_rd_data2 :
                $is_bgeu ? $rf_rd_data1 >= $rf_rd_data2 :
                1'b0; // else no branch
+            
+            $br_tgt_pc[31:0] = $pc + $imm;
          
          // ALU
          $result[31:0] =
