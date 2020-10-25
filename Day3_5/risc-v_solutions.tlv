@@ -80,8 +80,27 @@
                                           $instr[20],
                                           $instr[25:21],
                                           1'b0 }  ;
+         //  (opcode)
+         $opcode[6:0] = $instr[6:0];
+         //  (registers)
+         //      Validity probably does not help
+         ///     much with power here but has been added
+         //      to help with debug.
+         $rd_valid = ! ($is_s_instr || $is_b_instr);
+         $rs1_valid = ! ($is_j_instr || $is_u_instr);
+         $rs2_valid = $rs1_valid && ! $is_i_instr;
+         ?$rd_valid
+            $rd[4:0] = $instr[11:7];
+         ?$rs1_valid
+            $rs1[4:0] = $instr[19:15];
+         ?$rs2_valid
+            $rs2[4:0] = $instr[24:20];
          
-         
+         //   (function)
+         ?$rs1_valid
+            $funct3[2:0] = $instr[14:12];
+         ?$is_r_instr
+            $funct7[6:0] = $instr[31:25];
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = *cyc_cnt > 40;
    *failed = 1'b0;
