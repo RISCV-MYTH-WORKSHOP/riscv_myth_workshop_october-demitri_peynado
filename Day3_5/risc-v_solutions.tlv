@@ -142,14 +142,14 @@
          // Branch Taken?
          ?$is_b_instr
             $taken_br =
-               $is_beq ? $rf_rd_data1 == $rf_rd_data2 :
-               $is_bne ? $rf_rd_data1 != $rf_rd_data2 :
-               $is_blt ? (($rf_rd_data1 < $rf_rd_data2) ^
-                         ($rf_rd_data1[31] != $rf_rd_data2[31])) :
-               $is_bge ? (($rf_rd_data1 >= $rf_rd_data2) ^
-                         ($rf_rd_data1[31] != $rf_rd_data2[31])) :
-               $is_bltu ? $rf_rd_data1 < $rf_rd_data2 :
-               $is_bgeu ? $rf_rd_data1 >= $rf_rd_data2 :
+               $is_beq ? $src1_value == $src2_value :
+               $is_bne ? $src1_value != $src2_value :
+               $is_blt ? (($src1_value < $src2_value) ^
+                         ($src1_value[31] != $src2_value[31])) :
+               $is_bge ? (($src1_value >= $src2_value) ^
+                         ($src1_value[31] != $src2_value[31])) :
+               $is_bltu ? $src1_value < $src2_value :
+               $is_bgeu ? $src1_value >= $src2_value :
                1'b0; // else no branch
             
             $br_tgt_pc[31:0] = $pc + $imm;
