@@ -129,8 +129,21 @@
          $src1_value[31:0] = $rf_rd_data1;
          $src2_value[31:0] = $rf_rd_data2;
          
+         // Branch Taken?
+         ?$is_b_instr
+            $taken_br =
+               $is_beq ? $rf_rd_data1 == $rf_rd_data2 :
+               $is_bne ? $rf_rd_data1 != $rf_rd_data2 :
+               $is_blt ? (($rf_rd_data1 < $rf_rd_data2) ^
+                         ($rf_rd_data1[31] != $rf_rd_data2[31])) :
+               $is_bge ? (($rf_rd_data1 >= $rf_rd_data2) ^
+                         ($rf_rd_data1[31] != $rf_rd_data2[31])) :
+               $is_bltu ? $rf_rd_data1 < $rf_rd_data2 :
+               $is_bgeu ? $rf_rd_data1 >= $rf_rd_data2 :
+               1'b0; // else no branch
+         
          // ALU
-         $result[31:0] = 
+         $result[31:0] =
             $is_addi ? $src1_value + $imm :
             $is_add ? $src1_value + $src2_value :
                       32'bx;
