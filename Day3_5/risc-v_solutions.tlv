@@ -184,6 +184,7 @@
          $valid = ! (>>1$valid_taken_br || >>2$valid_taken_br ||
                         $load_redirect);
          $valid_taken_br = $valid && $taken_br;
+         $load = $valid && $is_load;
          
          // ALU
          $sltu_rslt = $src1_value < $src2_value;
@@ -192,7 +193,8 @@
             $is_andi ? $src1_value & $imm :
             $is_ori ? $src1_value | $imm :
             $is_xori ? $src1_value ^ $imm :
-            $is_addi ? $src1_value + $imm :
+            ($is_addi || $is_load || $is_s_instr) ?
+               $src1_value + $imm :
             $is_slli ? $src1_value << $imm[5:0] :
             $is_srli ? $src1_value >> $imm[5:0] :
             $is_and ? $src1_value & $src2_value :
@@ -216,9 +218,12 @@
                       32'bx;
          
          // Register file write
-         $rf_wr_en = $valid && $rd_valid && ! ($rd[4:0] == 5'b0); // x0 cannot be written to in RISC-V
-         $rf_wr_index[4:0] = $rd;
-         $rf_wr_data[31:0] = $result;
+         $rf_wr_en = (($valid && $rd_valid) || >>2$load) &&
+                        ! $load &&
+                        ! ($rf_wr_index[4:0] == 5'b0); // x0 cannot be written to in RISC-V
+         $rf_wr_index[4:0] = >>2$load ? $rd : >>2$rd;
+         $rf_wr_data[31:0] = $valid ? $result :
+                                      >>2$ld_data ; // Write load data
          
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = |cpu/xreg[10]>>5$value == (1+2+3+4+5+6+7+8+9);
