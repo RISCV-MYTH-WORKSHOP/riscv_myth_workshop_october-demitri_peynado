@@ -32,6 +32,8 @@
    m4_asm(ADDI, r13, r13, 1)            // Increment intermediate register by 1
    m4_asm(BLT, r13, r12, 1111111111000) // If a3 is less than a2, branch to label named <loop>
    m4_asm(ADD, r10, r14, r0)            // Store final result to register a0 so that it can be read by main program
+   m4_asm(SW, r0, r10, 100)             // store r10 to address four
+   m4_asm(LW, r15, r0, 100)             // read back the stored value into r15
    
    // Optional:
    // m4_asm(JAL, r7, 00000000000000000000) // Done. Jump to itself (infinite loop). (Up to 20-bit signed immediate plus implicit 0 bit (unlike JALR) provides byte address; last immediate bit should also be 0)
@@ -177,10 +179,10 @@
                $is_bgeu ? $src1_value >= $src2_value :
                1'b0; // else no branch
             
-            $br_tgt_pc[31:0] = $pc + $imm;
+         $br_tgt_pc[31:0] = $pc + $imm;
          
          // check RF write is valid
-         $load_redirect = (>>1$is_load || >>2$is_load);
+         $load_redirect = (>>1$load || >>2$load);
          $valid = ! (>>1$valid_taken_br || >>2$valid_taken_br ||
                         $load_redirect);
          $valid_taken_br = $valid && $taken_br;
@@ -221,12 +223,20 @@
          $rf_wr_en = (($valid && $rd_valid) || >>2$load) &&
                         ! $load &&
                         ! ($rf_wr_index[4:0] == 5'b0); // x0 cannot be written to in RISC-V
-         $rf_wr_index[4:0] = >>2$load ? $rd : >>2$rd;
+         $rf_wr_index[4:0] = $valid ? $rd : >>2$rd;
          $rf_wr_data[31:0] = $valid ? $result :
                                       >>2$ld_data ; // Write load data
+      @4
+         // Memory read/write
+         $dmem_wr_en = $is_s_instr && $valid;
+         $dmem_rd_en = $load;
+         $dmem_addr[3:0] = $result[5:2];
+         $dmem_wr_data[31:0] = $src2_value;
+      @5
+         $ld_data[31:0] = $dmem_rd_data;
          
    // Assert these to end simulation (before Makerchip cycle limit).
-   *passed = |cpu/xreg[10]>>5$value == (1+2+3+4+5+6+7+8+9);
+   *passed = |cpu/xreg[15]>>5$value == (1+2+3+4+5+6+7+8+9);
    *failed = 1'b0;
    
    // Macro instantiations for:
@@ -237,7 +247,7 @@
    |cpu
       m4+imem(@1)    // Args: (read stage)
       m4+rf(@2, @3)  // Args: (read stage, write stage) - if equal, no register bypass is required
-      //m4+dmem(@4)    // Args: (read/write stage)
+      m4+dmem(@4)    // Args: (read/write stage)
    
    m4+cpu_viz(@4)    // For visualisation, argument should be at least equal to the last stage of CPU logic
                        // @4 would work for all labs
