@@ -44,7 +44,8 @@
          // Branch when valid taken branch else increment
          $pc[31:0] = >>1$reset ? 32'd0 :
                      >>3$valid_taken_br ? >>3$br_tgt_pc :
-                                          >>1$pc + 32'd4;
+                     >>3$load_redirect ? >>3$pc + 32'd4 :
+                                         >>1$pc + 32'd4;
       @1
          // Fetch instruction
          $imem_rd_en = ! $reset;
@@ -179,7 +180,9 @@
             $br_tgt_pc[31:0] = $pc + $imm;
          
          // check RF write is valid
-         $valid = ! (>>1$valid_taken_br || >>2$valid_taken_br);
+         $load_redirect = (>>1$is_load || >>2$is_load);
+         $valid = ! (>>1$valid_taken_br || >>2$valid_taken_br ||
+                        $load_redirect);
          $valid_taken_br = $valid && $taken_br;
          
          // ALU
