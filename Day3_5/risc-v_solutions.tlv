@@ -36,7 +36,7 @@
    m4_asm(LW, r15, r0, 100)             // read back the stored value into r15
    
    // Optional:
-   // m4_asm(JAL, r7, 00000000000000000000) // Done. Jump to itself (infinite loop). (Up to 20-bit signed immediate plus implicit 0 bit (unlike JALR) provides byte address; last immediate bit should also be 0)
+   //m4_asm(JAL, r7, 00000000000000000000) // Done. Jump to itself (infinite loop). (Up to 20-bit signed immediate plus implicit 0 bit (unlike JALR) provides byte address; last immediate bit should also be 0)
    m4_define_hier(['M4_IMEM'], M4_NUM_INSTRS)
 
    |cpu
@@ -45,7 +45,9 @@
          // Reset when last instruction was reset to start on PC=0
          // Branch when valid taken branch else increment
          $pc[31:0] = >>1$reset ? 32'd0 :
-                     >>3$valid_taken_br ? >>3$br_tgt_pc :
+                     >>3$valid_taken_br ? (>>3$is_jalr ?
+                                              >>3$jalr_tgt_pc :
+                                              >>3$br_tgt_pc) :
                      >>3$load_redirect ? >>3$pc + 32'd4 :
                                          >>1$pc + 32'd4;
       @1
@@ -118,6 +120,7 @@
          //      (jump)
          $is_jal = $dec_bits ==? 11'bx_xxx_1101111;
          $is_jalr = $dec_bits ==? 11'bx_000_1100111;
+         $is_jump = $is_jal || $is_jalr;
          //      (branch)
          $is_beq = $dec_bits ==? 11'bx_000_1100011;
          $is_bne = $dec_bits ==? 11'bx_001_1100011;
@@ -166,20 +169,20 @@
          $src2_value[31:0] = $rs2_bypass_en ? >>1$result :
                                               $rf_rd_data2;
       @3
-         // Branch Taken?
-         ?$is_b_instr
-            $taken_br =
-               $is_beq ? $src1_value == $src2_value :
-               $is_bne ? $src1_value != $src2_value :
-               $is_blt ? (($src1_value < $src2_value) ^
-                         ($src1_value[31] != $src2_value[31])) :
-               $is_bge ? (($src1_value >= $src2_value) ^
-                         ($src1_value[31] != $src2_value[31])) :
-               $is_bltu ? $src1_value < $src2_value :
-               $is_bgeu ? $src1_value >= $src2_value :
-               1'b0; // else no branch
-            
+         // Branch/Jump Taken?
+         $taken_br =
+            $is_beq ? $src1_value == $src2_value :
+            $is_bne ? $src1_value != $src2_value :
+            $is_blt ? (($src1_value < $src2_value) ^
+                      ($src1_value[31] != $src2_value[31])) :
+            $is_bge ? (($src1_value >= $src2_value) ^
+                      ($src1_value[31] != $src2_value[31])) :
+            $is_bltu ? $src1_value < $src2_value :
+            $is_bgeu ? $src1_value >= $src2_value :
+            $is_jump; // else could be jump
+         
          $br_tgt_pc[31:0] = $pc + $imm;
+         $jalr_tgt_pc[31:0] = $src1_value + $imm;
          
          // check RF write is valid
          $load_redirect = (>>1$load || >>2$load);
