@@ -235,7 +235,6 @@
          $dmem_rd_en = $load;
          $dmem_addr[3:0] = $result[5:2];
          $dmem_wr_data[31:0] = $src2_value;
-      @5
          $ld_data[31:0] = $dmem_rd_data;
          
    // Assert these to end simulation (before Makerchip cycle limit).
