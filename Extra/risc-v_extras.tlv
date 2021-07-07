@@ -33,7 +33,7 @@
    m4_asm(BLT, r13, r12, 1111111111000) // If a3 is less than a2, branch to label named <loop>
    m4_asm(ADD, r10, r14, r0)            // Store final result to register a0 so that it can be read by main program
    m4_asm(SW, r0, r10, 100)             // store r10 to address four
-   m4_asm(LW, r15, r0, 100)             // read back the stored value into r15
+   m4_asm(LB, r15, r0, 100)             // read back the stored value into r15
    
    // Optional:
    //m4_asm(JAL, r7, 00000000000000000000) // Done. Jump to itself (infinite loop). (Up to 20-bit signed immediate plus implicit 0 bit (unlike JALR) provides byte address; last immediate bit should also be 0)
@@ -129,6 +129,11 @@
          $is_bltu = $dec_bits ==? 11'bx_110_1100011;
          $is_bgeu = $dec_bits ==? 11'bx_111_1100011;
          //      (load/store)
+         $is_lb = $dec_bits ==? 11'bx_000_0000011;
+         $is_lh = $dec_bits ==? 11'bx_001_0000011;
+         $is_lw = $dec_bits ==? 11'bx_010_0000011;
+         $is_lbu = $dec_bits ==? 11'bx_100_0000011;
+         $is_lhu = $dec_bits ==? 11'bx_101_0000011;
          $is_load = $dec_bits ==? 11'bx_xxx_0000011;
          $is_sb = $dec_bits == 11'bx_000_0100011;
          $is_sh = $dec_bits == 11'bx_001_0100011;
@@ -235,7 +240,31 @@
          $dmem_rd_en = $load;
          $dmem_addr[3:0] = $result[5:2];
          $dmem_wr_data[31:0] = $src2_value;
-         $ld_data[31:0] = $dmem_rd_data;
+         //    (extract bytes and halfwords)
+         $halfword0[31:0] = $is_lh ?
+                               {{16{$dmem_rd_data[15]}},$dmem_rd_data[15:0]} :
+                               {16'h0,$dmem_rd_data[15:0]};
+         $halfword1[31:0] = $is_lh ?
+                               {{16{$dmem_rd_data[31]}},$dmem_rd_data[31:16]} :
+                               {16'h0,$dmem_rd_data[31:16]};
+         $byte0[31:0] = $is_lb ?
+                               {{24{$dmem_rd_data[7]}},$dmem_rd_data[7:0]} :
+                               {24'h0,$dmem_rd_data[7:0]};
+         $byte1[31:0] = $is_lb ?
+                               {{24{$dmem_rd_data[15]}},$dmem_rd_data[15:8]} :
+                               {24'h0,$dmem_rd_data[15:8]};
+         $byte2[31:0] = $is_lb ?
+                               {{24{$dmem_rd_data[23]}},$dmem_rd_data[23:16]} :
+                               {24'h0,$dmem_rd_data[23:16]};
+         $byte3[31:0] = $is_lb ?
+                               {{24{$dmem_rd_data[31]}},$dmem_rd_data[31:24]} :
+                               {24'h0,$dmem_rd_data[31:24]};
+         $ld_data[31:0] = ($is_lh || $is_lhu) ?
+                             ($result[1] ? $halfword1 : $halfword0) :
+                          ($is_lb || $is_lbu) ?
+                             ($result[1] ? ($result[0] ? $byte3 : $byte2) :
+                                           ($result[0] ? $byte1 : $byte0)) :
+                             $dmem_rd_data[31:0];
          
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = |cpu/xreg[15]>>5$value == (1+2+3+4+5+6+7+8+9);
